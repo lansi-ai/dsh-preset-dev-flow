@@ -42,7 +42,7 @@ dsh-preset-dev-flow/
 ## Prerequisites
 
 - A **standard DSH deployment**. This preset references the standard tool packages (`dsh-tool-pwsh`, `dsh-tool-fs`, `dsh-skill-filesystem`, plan mode, compaction, delegation, ...); if your deployment lacks them the preset will not mount.
-- **`@deepseek-ai/dsh-fetch-url`**: this preset declares the `fetch_url` tool, so it must be installed first (see below).
+- **`@lansi-ai/dsh-fetch-url`**: this preset declares the `fetch_url` tool, so it must be installed first (see below).
 
 ---
 
@@ -59,7 +59,7 @@ pnpm add https://github.com/lansi-ai/dsh-fetch-url
 # or equivalently: pnpm add github:lansi-ai/dsh-fetch-url
 ```
 
-> Note: the `fetch-url` row in `agent.cordis.yml` references the package `@deepseek-ai/dsh-fetch-url` **by name**; it never installs or downloads anything. Install it first, or the whole preset cannot mount.
+> Note: the `fetch-url` row in `agent.cordis.yml` references the package `@lansi-ai/dsh-fetch-url` **by name**; it never installs or downloads anything. Install it first, or the whole preset cannot mount.
 
 ### 2. Install the preset
 

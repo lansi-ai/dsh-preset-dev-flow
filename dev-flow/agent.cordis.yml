@@ -300,10 +300,10 @@
 # ── fetch-url (user plugin, scoped to this preset) ──────────────────────────
 
 # Registers the model-callable `fetch_url` tool for agents joined to THIS preset
-# only. It references the `@deepseek-ai/dsh-fetch-url` package BY NAME, so that
+# only. It references the `@lansi-ai/dsh-fetch-url` package BY NAME, so that
 # package must be installed on this deployment before the preset can mount.
 # Install it from its source (no plugin-code change, and the preset row never
 # installs or downloads anything — it only composes the installed package):
 #   pnpm add https://github.com/lansi-ai/dsh-fetch-url
 - id: fetch-url
-  name: '@deepseek-ai/dsh-fetch-url'
+  name: '@lansi-ai/dsh-fetch-url'

@@ -42,7 +42,7 @@ dsh-preset-dev-flow/
 ## 先决条件
 
 - 一个**标准 DSH 部署**：本预设引用的工具（`dsh-tool-pwsh`、`dsh-tool-fs`、`dsh-skill-filesystem`、计划模式、压缩、委托等）都是 `standard` 自带的包；若你的部署没有它们，预设将无法挂载。
-- **`@deepseek-ai/dsh-fetch-url`**：本预设声明了 `fetch_url` 工具，需先安装（见下）。
+- **`@lansi-ai/dsh-fetch-url`**：本预设声明了 `fetch_url` 工具，需先安装（见下）。
 
 ---
 
@@ -59,7 +59,7 @@ pnpm add https://github.com/lansi-ai/dsh-fetch-url
 # 或者等价地： pnpm add github:lansi-ai/dsh-fetch-url
 ```
 
-> 说明：预设 `agent.cordis.yml` 里的 `fetch-url` 行只是按包名 `@deepseek-ai/dsh-fetch-url` **引用**，它**不会**自动下载/安装。**必须先装好**，否则整个 `dev-flow` 预设无法挂载。
+> 说明：预设 `agent.cordis.yml` 里的 `fetch-url` 行只是按包名 `@lansi-ai/dsh-fetch-url` **引用**，它**不会**自动下载/安装。**必须先装好**，否则整个 `dev-flow` 预设无法挂载。
 
 ### 2. 安装预设
 
