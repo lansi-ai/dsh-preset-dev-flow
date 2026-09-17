@@ -1,5 +1,7 @@
 # Git 提交规范与协作指南 (git-commit-guide.md)
 
+> **📦 已并入 `project-rules-guide.md`（v2.2）**——新项目按单入口生成，本文仅作历史参考。
+
 ## 01. 技能定位与生成目标
 本指南用于约束 AI 及团队开发者在项目开发过程中，每次代码变动或任务交付时的 **Git Commit Message 格式、提交颗粒度与流转 SOP**。
 

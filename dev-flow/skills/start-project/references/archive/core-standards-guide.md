@@ -1,5 +1,7 @@
 # 静态代码规范生成指南 (core-standards-guide.md)
 
+> **📦 已并入 `project-rules-guide.md`（v2.2）**——新项目按单入口生成，本文仅作历史参考。
+
 ## 01. 技能定位与生成目标
 本指南用于指导 AI 在 `start-project` 阶段 2（或单独执行 `/init-l1-new`）时，读取 `docs/prd-and-design.md` 提取出的技术选型与业务约束，**正向生成一份具备强约束力、无歧义的静态基座规则文件 `core-standards.md`（保存于当前 IDE 的规则目录 `{{RULES_DIR}}` 中）**。
 

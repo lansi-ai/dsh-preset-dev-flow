@@ -13,10 +13,12 @@
 核心流程（写入 persona，常驻生效）：
 
 - **头脑风暴先行**：接需求先按 5 维框架追问，收敛共识，拿到用户 **Sign-off** 才动手。
-- **自动工程交付**（Sign-off 后）：自动检测 `{{RULES_DIR}}`，生成 `docs/prd-and-design.md` + 6 份规则文件（`core-standards` / `architecture` / `active-context` + HTML 看板 / `git-commit-guide` / `workflow`）。
-- **编码 SOP**：每任务先做"编码前契约确认"→ 预检 L3/L2/L1 → API-First（单一类型源头 + `ApiResponse<T>` + 开关式 Mock）→ 增量实现（1–3 文件/任务，禁 TODO 堆砌）→ 交付前质量自检链。
-- **后置同步**：更新看板 MD+HTML、生成 Conventional Commit 命令、汇报变更。
-- **规则自我演进**：技术栈 / 架构 / 流程变化时同步更新对应规则文件。
+- **任务分级 A/B/C**：A（契约/架构/规则变更、里程碑、发版）走全 SOP + 全门禁；B（常规功能 1–3 文件）走标准流程；C（小修 ≤3 文件、无契约变更）只做「修 + 门禁 + 提交」，SOP 豁免且**不强制更新看板**。
+- **自动工程交付**（Sign-off 后，幂等）：缺规则时生成 `docs/PROJECT-RULES.md`（单入口，§0–§6）+ `docs/active-context.md`（仅 MD 看板）+ `AGENTS.md`（跨工具入口）；规则已就位则跳过，缺入口只顺手补齐。生成后先过**审阅闸门**（确认 §0/§1/§2/§6 关键假设）再收官。
+- **规则单源分工**：通用纪律（凭据注入、类型安全、防注入…）只在 **persona** 定义；项目事实与专属红线在 **PROJECT-RULES** 定义，同物一处、冲突取严。
+- **编码 SOP**：每任务先做"编码前契约确认"→ 预检项目规则与看板 → API-First（单一类型源头 + `ApiResponse<T>` + 开关式 Mock）→ 增量实现（1–3 文件/任务，禁 TODO 堆砌）→ 交付前质量自检链。
+- **后置同步**：更新看板（仅 MD）、生成 Conventional Commit 命令、汇报变更。
+- **规则自我演进**：技术栈 / 架构 / 流程变化时同步更新 `PROJECT-RULES.md` 的对应节。
 - **红线**：不硬编码凭据、不逃静态检查、防注入、结构化异常、Schema 强校验、资源自动释放。
 
 ---
@@ -28,40 +30,27 @@ dsh-preset-dev-flow/
 ├── README.md                       # 中文说明
 ├── README.en.md                    # English
 └── dev-flow/                       # 预设文件夹（复制进 $DSH_HOME/.agent-presets/ 即可）
-    ├── agent.cordis.yml            # 预设组成：persona + 工具 + 计划模式 + 压缩 + 委托 + skill 发现根 + fetch_url
+    ├── agent.cordis.yml            # 预设组成：persona + 工具 + 计划模式 + 压缩 + 委托 + skill 发现根
     ├── preset.yml                  # 显示名「开发流程」+ 描述
     └── skills/
         └── start-project/          # 随预设携带的技能
             ├── SKILL.md
-            └── references/         # brainstorming / core-standards / architecture /
-                                    # active-context / git-commit / workflow 参考指南
+            └── references/         # project-rules / active-context / brainstorming 指南
+                └── archive/        # core-standards / architecture / git-commit / workflow
+                                    # （已并入 project-rules-guide，仅作历史参考）
 ```
 
 ---
 
 ## 先决条件
 
-- 一个**标准 DSH 部署**：本预设引用的工具（`dsh-tool-pwsh`、`dsh-tool-fs`、`dsh-skill-filesystem`、计划模式、压缩、委托等）都是 `standard` 自带的包；若你的部署没有它们，预设将无法挂载。
-- **`@lansi-ai/dsh-fetch-url`**：本预设声明了 `fetch_url` 工具，需先安装（见下）。
+**零先决条件：把 `dev-flow` 拷进 `$DSH_HOME/.agent-presets/` 即可，无需安装任何额外包。**
+
+- 唯一要求是一个**标准 DSH 部署**：本预设引用的工具（`dsh-tool-pwsh`、`dsh-tool-fs`、`dsh-skill-filesystem`、计划模式、压缩、委托等）都是 `standard` 自带的包；若你的部署没有它们，预设将无法挂载。
 
 ---
 
 ## 安装
-
-### 1. 安装工具插件（预设 `fetch-url` 行的前置条件）
-
-在本预设使用之前，把插件安装进你的 DSH profile（让它可被解析，但**不会**变成宿主全局）：
-
-```bash
-# 在你的 profile 目录里（例如 profiles/web）
-cd <your dsh profile>
-pnpm add https://github.com/lansi-ai/dsh-fetch-url
-# 或者等价地： pnpm add github:lansi-ai/dsh-fetch-url
-```
-
-> 说明：预设 `agent.cordis.yml` 里的 `fetch-url` 行只是按包名 `@lansi-ai/dsh-fetch-url` **引用**，它**不会**自动下载/安装。**必须先装好**，否则整个 `dev-flow` 预设无法挂载。
-
-### 2. 安装预设
 
 ```bash
 # 确保 DSH_HOME 下存在 .agent-presets 目录
@@ -81,7 +70,9 @@ $DSH_HOME/.agent-presets/dev-flow/
 
 `agentPresets` 会**无缓存地**读取该根目录，所以放进去即被识别，无需额外注册命令。
 
-### 3. 使用
+---
+
+## 使用
 
 新建会话 → 在预设选择器里选 **「开发流程」**。
 
@@ -89,18 +80,17 @@ $DSH_HOME/.agent-presets/dev-flow/
 
 ## 验证
 
-最直接的验证：**新建一个会话选「开发流程」**，看它是否能正常启动、工具列表里是否出现 `fetch_url`。若因"引用了未安装的包"导致整包挂载失败，会体现在该会话无法创建。
+最直接的验证：**新建一个会话选「开发流程」**，确认它能正常创建、且无需安装任何额外包。随后在一个空项目里走一遍「阶段 1 追问 → Sign-off」，即可看到它生成 `docs/prd-and-design.md`、`docs/PROJECT-RULES.md`、`docs/active-context.md` 与 `AGENTS.md`。
 
 ---
 
 ## 说明
 
-- **预设行只引用、不安装**：`fetch-url` 行引用的是**已安装**的包；`skills/` 里的 `start-project` 随预设**携带**（通过 `skill-filesystem.customSkillDirs` 注册）。
-- **可移植性**：本仓库的预设不包含任何绝对路径（`skills/` 用 `baseUrl` 相对解析）。直接分发到其它机器/部署即可；唯一外置要求是接收方的 DSH 里有标准工具包，且装好 `dsh-fetch-url`。
-- 想在别处也用这个工具：在对应部署先执行上面的第 1 步（`pnpm add`），再放预设。
+- **随预设携带**：`skills/` 里的 `start-project` 及其 references 通过 `skill-filesystem.customSkillDirs` 注册，跟着预设走。
+- **可移植性**：本仓库的预设不包含任何绝对路径（`skills/` 用 `baseUrl` 相对解析）。直接分发到其它机器/部署即可；唯一外置要求是接收方的 DSH 里有标准工具包。
 
 ---
 
 ## License
 
-本 preset 与其随附内容按 MIT 许可发布（与随附插件一致）。
+本 preset 与其随附内容按 MIT 许可发布。

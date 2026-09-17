@@ -13,10 +13,12 @@ An **agent preset** for the DeepSeek Harness: a disciplined, sign-off-gated *dev
 Core behavior (injected into the persona, always active):
 
 - **Brainstorm first**: on any request, ask structured questions, converge to a consensus, and require an explicit **Sign-off** before coding.
-- **Auto engineering delivery** (after sign-off): detect `{{RULES_DIR}}` and generate `docs/prd-and-design.md` plus 6 rule files (`core-standards`, `architecture`, `active-context` + HTML board, `git-commit-guide`, `workflow`).
-- **Coding SOP**: micro-contract confirmation → pre-flight L3/L2/L1 → API-First (single type source + `ApiResponse<T>` + switchable Mock) → incremental implementation (1–3 files/task, no TODO stubs) → quality gate.
-- **Post-execution sync**: update the MD+HTML board, emit a Conventional Commit command, report changes.
-- **Rule self-evolution**: update the matching rule file when the stack/architecture/process changes.
+- **Grade every task A/B/C**: A (contract/architecture/rule changes, milestones, releases) runs the full SOP and gates; B (regular feature, 1–3 files) runs the standard flow; C (small fix ≤3 files, no contract change) is fix + gates + commit, SOP exempt and **no kanban update required**.
+- **Auto engineering delivery** (after sign-off, idempotent): when rules are missing it generates `docs/PROJECT-RULES.md` (single entry, §0–§6) + `docs/active-context.md` (MD-only board) + `AGENTS.md` (cross-tool entry); when the rules already exist it skips generation and only tops up a missing entry. A **review gate** (confirm the §0/§1/§2/§6 key assumptions) runs before completion.
+- **Single-source rules**: universal discipline (credential injection, type safety, injection prevention, ...) is defined only in the **persona**; project facts and project-specific red lines live in **PROJECT-RULES** — one definition per rule, strictest wins on conflict.
+- **Coding SOP**: micro-contract confirmation → pre-flight project rules and kanban → API-First (single type source + `ApiResponse<T>` + switchable Mock) → incremental implementation (1–3 files/task, no TODO stubs) → quality gate.
+- **Post-execution sync**: update the MD-only board, emit a Conventional Commit command, report changes.
+- **Rule self-evolution**: update the matching section of `PROJECT-RULES.md` when the stack/architecture/process changes.
 - **Red lines**: no hardcoded credentials, no type-check evasion, no injection, structured errors, schema validation, resource auto-release.
 
 ---
@@ -28,40 +30,27 @@ dsh-preset-dev-flow/
 ├── README.md                       # Chinese
 ├── README.en.md                    # English
 └── dev-flow/                       # the preset folder (copy it into $DSH_HOME/.agent-presets/)
-    ├── agent.cordis.yml            # composition: persona + tools + plan mode + compaction + delegation + skill discovery + fetch_url
+    ├── agent.cordis.yml            # composition: persona + tools + plan mode + compaction + delegation + skill discovery
     ├── preset.yml                  # display name and description
     └── skills/
         └── start-project/          # the skill shipped with this preset
             ├── SKILL.md
-            └── references/         # brainstorming / core-standards / architecture /
-                                    # active-context / git-commit / workflow guides
+            └── references/         # project-rules / active-context / brainstorming guides
+                └── archive/        # core-standards / architecture / git-commit / workflow
+                                    # (merged into project-rules-guide; kept for history only)
 ```
 
 ---
 
 ## Prerequisites
 
-- A **standard DSH deployment**. This preset references the standard tool packages (`dsh-tool-pwsh`, `dsh-tool-fs`, `dsh-skill-filesystem`, plan mode, compaction, delegation, ...); if your deployment lacks them the preset will not mount.
-- **`@lansi-ai/dsh-fetch-url`**: this preset declares the `fetch_url` tool, so it must be installed first (see below).
+**Zero prerequisites: just copy `dev-flow` into `$DSH_HOME/.agent-presets/` — no extra package to install.**
+
+- The only requirement is a **standard DSH deployment**. This preset references the standard tool packages (`dsh-tool-pwsh`, `dsh-tool-fs`, `dsh-skill-filesystem`, plan mode, compaction, delegation, ...); if your deployment lacks them the preset will not mount.
 
 ---
 
 ## Install
-
-### 1. Install the tool plugin (prerequisite for the `fetch-url` row)
-
-Before using this preset, install the plugin into your DSH profile so it is resolvable (but it will **not** become a host-global bundle):
-
-```bash
-# In your DSH profile directory (e.g. profiles/web)
-cd <your dsh profile>
-pnpm add https://github.com/lansi-ai/dsh-fetch-url
-# or equivalently: pnpm add github:lansi-ai/dsh-fetch-url
-```
-
-> Note: the `fetch-url` row in `agent.cordis.yml` references the package `@lansi-ai/dsh-fetch-url` **by name**; it never installs or downloads anything. Install it first, or the whole preset cannot mount.
-
-### 2. Install the preset
 
 ```bash
 # Make sure .agent-presets exists under DSH_HOME
@@ -81,7 +70,9 @@ $DSH_HOME/.agent-presets/dev-flow/
 
 `agentPresets` reads that root **unmemoized**, so the preset is recognized as soon as it is placed — no extra registration command.
 
-### 3. Use it
+---
+
+## Use it
 
 Start a new session and pick **开发流程 / Development Process** in the preset picker.
 
@@ -89,18 +80,17 @@ Start a new session and pick **开发流程 / Development Process** in the prese
 
 ## Verify
 
-The simplest check: **start a new session and select 开发流程**. If it starts and `fetch_url` appears in the tool list, the preset mounted correctly. If the preset references an uninstalled package, session creation will fail.
+The simplest check: **start a new session and select 开发流程** and confirm it is created successfully with no extra package installed. Then run one pass of "Phase 1 questions → Sign-off" in an empty project and watch it generate `docs/prd-and-design.md`, `docs/PROJECT-RULES.md`, `docs/active-context.md` and `AGENTS.md`.
 
 ---
 
 ## Notes
 
-- **The preset row only references, never installs.** The `fetch-url` row points at an *installed* package; the `start-project` skill **travels** with the preset (registered via `skill-filesystem.customSkillDirs`).
-- **Portability.** This repo's preset contains no absolute paths (`skills/` resolves relative to `baseUrl`). Copy it to another machine/deployment as-is; the only external requirement is that the target has the standard tool packages and has installed `dsh-fetch-url`.
-- Add this tool anywhere else by running step 1 (`pnpm add`) on that deployment, then placing the preset.
+- **Ships with the preset.** The `start-project` skill and its references are registered via `skill-filesystem.customSkillDirs`, so they travel with the preset.
+- **Portability.** This repo's preset contains no absolute paths (`skills/` resolves relative to `baseUrl`). Copy it to another machine/deployment as-is; the only external requirement is that the target has the standard tool packages.
 
 ---
 
 ## License
 
-This preset and its bundled content are released under the MIT License (consistent with the bundled plugin).
+This preset and its bundled content are released under the MIT License.

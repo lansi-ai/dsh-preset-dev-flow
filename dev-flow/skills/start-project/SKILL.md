@@ -1,15 +1,25 @@
 ---
 name: start-project
-description: "新项目一站式启动总控技能。调用 brainstorming-guide 进行业务与技术方案澄清，在用户 Sign-off 后自动识别 IDE 规则路径，连续生成 PRD 与 rules 分层规则文件。"
+description: "新项目一站式启动总控技能。调用 brainstorming-guide 进行业务与技术方案澄清，在用户 Sign-off 后生成规则单入口 docs/PROJECT-RULES.md + 看板 docs/active-context.md + 跨工具入口 AGENTS.md，并经审阅闸门定稿。"
 ---
 
 # 🚀 一站式项目启动总控技能（Start Project Orchestrator）
 
-你是产品探索教练与首席架构师。你的职责是**遵照 `references/brainstorming-guide.md` 引导业务澄清**，并在用户 Sign-off 确认后，**动态识别当前 IDE 的规则路径，读取 `references/` 指南，自动化生成项目分层规则体系与 SOP**。
+你是产品探索教练与首席架构师。你的职责是**遵照 `references/brainstorming-guide.md` 引导业务澄清**，并在用户 Sign-off 确认后，**读取 `references/` 指南，自动化生成规则单入口 `docs/PROJECT-RULES.md` + 激活上下文看板 `docs/active-context.md` + 跨工具入口 `AGENTS.md`，并通过生成后审阅闸门定稿**。
 
 ## 核心理念
 
 **“花时间思考，而不是花时间返工；一次启动，全盘定规。”**
+
+---
+
+## 技能加载确认（进入流程前）
+
+加载本技能后、开始追问之前，**先向用户输出一行确认**（让"已加载"可验证、可追责）：
+
+> ✅ 已加载 `start-project` 技能；将按流程执行：阶段 1 头脑风暴 → Sign-off → 阶段 2 规则生成 → 步骤 5 审阅闸门 → 阶段 3 收官。
+
+若无法加载（技能不可得）→ **不进入流程，直接报告用户**，禁止凭记忆生成规则。
 
 ---
 
@@ -34,72 +44,80 @@ description: "新项目一站式启动总控技能。调用 brainstorming-guide 
 
 **触发条件**：当用户在阶段 1 完成 Sign-off 确认后，**自动无缝进入本阶段，无需用户输入额外指令**。
 
-### 步骤 0：IDE 规则路径自动识别 (Rules Directory Sensing)
-在写入规则前，AI 必须首先检查项目根目录并自动决定 `{{RULES_DIR}}`：
-- 若检测到 `.trae/` 目录或处于 Trae 环境 ➔ 设 `{{RULES_DIR}}` = `.trae/rules/`
-- 若检测到 `.cursor/rules/` 目录 ➔ 设 `{{RULES_DIR}}` = `.cursor/rules/`
-- 若检测到 `.clinerules/` 或 `.windsurfrules` ➔ 设 `{{RULES_DIR}}` 为对应路径
-- 若均无，默认设 `{{RULES_DIR}}` = `.rules/`（并自动创建该目录）
+### 步骤 0：幂等检查与规则路径决策 (Idempotency & Rules Location)
+**判定锚点 = `docs/PROJECT-RULES.md`（规则本体）；`AGENTS.md` 只是可选入口，不参与"是否生成"的判定。**
 
----
+写入前先检查项目根，按此表判定（**本表为唯一判定来源，不再另附细则**）：
 
-请按照以下顺序，自动在后台连续生成并写入 **6 个核心交付文件**：
+| 项目现状 | 判定 | 动作 |
+|---|---|---|
+| 有 `docs/PROJECT-RULES.md` 且含 §3 工作流核心（任务分级表 + 完成门禁） | 规则已就位 | **跳过生成**，汇报"项目已有规则，进入开发模式"；缺 `AGENTS.md` 则顺手补 3 行入口（低成本，不视为生成理由） |
+| 有 `docs/PROJECT-RULES.md` 但 §3 缺失/为空 | 规则不完整 | 提示"规则文件不完整（缺 §3 工作流核心），建议补齐或重建"，由用户决定，**不静默跳过** |
+| 只有 `AGENTS.md`、无 `docs/PROJECT-RULES.md`（如从模板克隆） | 视为缺规则 | 正常生成 `PROJECT-RULES.md`，保留现有 `AGENTS.md` 并在其上补指向 |
+| 旧 v1 形态（`.trae/rules/` 或 `.rules/` 下的 core-standards/workflow 等 6 文件） | 需迁移 | 提示迁移（**每次会话至多一次**，用户拒绝后不再复述）：生成 `docs/PROJECT-RULES.md` + `docs/active-context.md` + `AGENTS.md`，并在旧文件头部标注「📦 已归档，以 docs/PROJECT-RULES.md 为准」 |
+| 两者都无 | 全新项目 | 默认写入 `docs/`（工具无关位置，**不按 IDE 猜路径**）；用户显式指定 IDE 规则目录（如 `.cursor/rules/`）时才写那里，并同时生成 `AGENTS.md` 入口 |
 
 ### 步骤 1：落盘产品与设计草案 `docs/prd-and-design.md`
 将阶段 1 头脑风暴讨论的所有结论完整汇总落盘至 `docs/prd-and-design.md`。
 
-### 步骤 2：生成静态代码规范 `{{RULES_DIR}}core-standards.md`
-- **操作指令**：读取 `references/core-standards-guide.md`。
-- **结合依据**：结合 PRD 中的技术选型与安全/性能约束。
-- **配置注入**：必须包含 Frontmatter（`alwaysApply: true`, `globs: "*"`）。
-- **落盘路径**：`{{RULES_DIR}}core-standards.md`。
+### 步骤 2：生成规则单入口 `docs/PROJECT-RULES.md`
+- **操作指令**：读取 `references/project-rules-guide.md`。
+- **结合依据**：结合 PRD 中的技术选型、模块划分、安全/性能约束；**扫描项目真实结构**（构建清单、目录树、现有文档）填写项目专属部分——并注意**语言适配**（guide 示例为 TS/web，按项目实际语言改写等价物）。
+- **产物结构**（§0–§6 单入口，**无 Frontmatter**——规则是文档，不是 IDE 注入配置）：
+  - §0 项目快照：定位、技术栈、基线版本、当前主线
+  - §1 硬约束红线：**仅项目专属**（端口策略/禁改第三方/审批门槛…）；通用红线**不在此重复**（已在 persona 单源定义）
+  - §2 目录放置：项目目录表（扫代码生成）
+  - §3 工作流：任务分级 A/B/C（含 C 类不强制看板）+ 开工流程 + 完成门禁 + 特殊场景
+  - §4 提交规范：Conventional Commits + 项目 scope 表
+  - §5 字典索引：项目的文档/台账（pitfalls 等如有）
+  - §6 环境注意：构建/沙箱/常见坑
 
-### 步骤 3：生成业务架构地图 `{{RULES_DIR}}architecture.md`
-- **操作指令**：读取 `references/architecture-guide.md`。
-- **结合依据**：结合 PRD 中的业务模块划分与数据流方向。
-- **配置注入**：必须包含 Frontmatter（`alwaysApply: true`, `globs: "*"`）。
-- **落盘路径**：`{{RULES_DIR}}architecture.md`。
-
-### 步骤 4：生成激活上下文看板 `{{RULES_DIR}}active-context.md`
+### 步骤 3：生成激活上下文看板 `docs/active-context.md`
 - **操作指令**：读取 `references/active-context-guide.md`。
-- **结合依据**：结合 PRD 中的 MVP 核心功能与第一阶段目标。
-- **配置注入**：必须包含 Frontmatter（`alwaysApply: true`, `globs: "*"`）。
-- **落盘路径**：`{{RULES_DIR}}active-context.md`（并同步生成 `docs/active-context.html` 浏览器美化看板）。
+- **落盘路径**：`docs/active-context.md`（滚动窗口 ≤100 行，**仅 MD，不再生成 HTML**；维护协议注明 C 类任务不强制更新）。
 
-### 步骤 5：生成 Git 提交规范指南 `{{RULES_DIR}}git-commit-guide.md`
-- **操作指令**：读取 `references/git-commit-guide.md`。
-- **结合依据**：结合项目的模块命名与 Conventional Commits 规范。
-- **配置注入**：必须包含 Frontmatter（`alwaysApply: true`, `globs: "*"`）。
-- **落盘路径**：`{{RULES_DIR}}git-commit-guide.md`。
+### 步骤 4：生成跨工具入口 `AGENTS.md`（项目根）
+3 行入口：指向 `docs/PROJECT-RULES.md` + `docs/active-context.md` + 一句话定位（模板见下方）。
 
-### 步骤 6：生成工作流 SOP 与自演进规则 `{{RULES_DIR}}workflow.md`
-- **操作指令**：读取 `references/workflow-guide.md`、`references/brainstorming-guide.md` 与 `references/git-commit-guide.md`。
-- **结合依据**：结合项目的开发流水线、编码前微观契约确认机制、质量自检要求与规则自我更新机制。
-- **配置注入**：必须包含 Frontmatter（`alwaysApply: true`, `globs: "*"`）。
-- **落盘路径**：`{{RULES_DIR}}workflow.md`。
+**`AGENTS.md` 模板**：
 
----
+```markdown
+# {{PROJECT_NAME}} — Agent 协作入口
+
+> 本文件让任何 AI 工具（DSH / Claude Code / Codex / Cursor …）开工即可定位项目规则。
+
+## 开工必读
+1. `docs/PROJECT-RULES.md` — 权威规则（目录放置 / 工作流分级 / 提交规范 / 字典索引 / 项目专属红线）
+2. `docs/active-context.md` — 当前任务看板（滚动窗口，最新进度与下一步）
+
+## 一句话定位（start-project 阶段 1 Sign-off 后回填）
+{{ONE_LINE_POSITIONING}}
+
+## 快速事实
+- 技术栈：{{TECH_STACK}} 　·　基线：{{BASE_VERSION}}
+- 验收命令：{{VERIFY_COMMANDS}}
+```
+
+### 步骤 5：生成后审阅闸门（Sign-off 精神延伸到规则文件）
+**不直接宣告"完成"**，先输出《规则审阅摘要》，请用户确认后再定稿：
+- **§0 快照的假设**：技术栈 / 基线版本 / 当前主线 —— 请确认（可能有抄错或推断）
+- **§1 已定的项目专属红线** —— 请确认或增删
+- **§2 目录表识别到的模块** —— 请确认有无遗漏
+- **§6 环境注意**（构建命令 / 坑）—— 请确认
+审阅方式：AI 以列表呈现"生成了什么 + 关键假设"，用户回复确认或修改意见；**确认后才进入阶段 3**。
+审阅优先级：`PROJECT-RULES.md` **高**（它是后续所有会话的宪法）· `prd` 已在阶段 1 Sign-off · `active-context` 低（一眼扫过）· `AGENTS.md` 免审（纯模板）。
 
 ## 阶段 3：收官与工作流闭环 (Completion)
 
-当上述 6 个文件全部自动生成并落盘后，输出最终总结汇报（列出实际写入的真实路径）：
+**前提**：步骤 5 的《规则审阅摘要》已获用户确认（审阅不通过则回步骤 2/3 修改后重新确认）。
+当上述文件全部自动生成并落盘且审阅确认后，输出最终总结汇报（列出实际写入的真实路径）：
 
 > 🎉 **项目初始化与规则治理体系构建完成！**
-> 
-> 我已为您完成了宏观业务头脑风暴，并自动适配了您当前 IDE 的规则路径，成功建立了完整工程基座：
-> 
-> 📄 **人类可读文档 (`docs/`)**：
-> - `docs/prd-and-design.md` — 产品与技术设计方案
-> - `docs/active-context.html` — 可视化动态任务看板（浏览器双击打开）
-> 
-> ⚙️ **AI 治理规则 (`{{RULES_DIR}}`)** *(已配置 IDE 全局自动加载 `alwaysApply: true`)*：
-> - `{{RULES_DIR}}core-standards.md` — 静态代码规范与安全红线
-> - `{{RULES_DIR}}architecture.md` — 工程目录映射与架构分层
-> - `{{RULES_DIR}}active-context.md` — 第一阶段 MVP 开发动态看板
-> - `{{RULES_DIR}}git-commit-guide.md` — Git 约定式提交规范与颗粒度控制
-> - `{{RULES_DIR}}workflow.md` — AI 编码 SOP、微观契约确认与规则自演进协议
-> 
-> **准备好开工了吗？** 随时告诉我：**“按照 active-context.md 中的步骤 1，开始写代码吧！”**
+>
+> 📄 **人类可读文档 (`docs/`)**：`docs/prd-and-design.md` · `docs/PROJECT-RULES.md` · `docs/active-context.md`
+> 🔗 **跨工具入口**：`AGENTS.md`（任何 AI 工具开工即识别）
+>
+> **准备好开工了吗？** 随时告诉我："**按照 active-context.md 中的下一步，开始写代码吧！**"
 
 ---
 
@@ -107,5 +125,5 @@ description: "新项目一站式启动总控技能。调用 brainstorming-guide 
 
 1. **职责单一化**：头脑风暴的具体追问框架严格依赖 `brainstorming-guide.md`，本技能不做重复定义。
 2. **必须 Sign-off 阻断**：必须获得用户对头脑风暴共识的 Sign-off 确认后，方可触发阶段 2 的自动连招落盘。
-3. **零命令负担**：用户 Sign-off 后，自动连续生成 6 个核心文件，无需用户再次输入命令。
+3. **零命令负担**：用户 Sign-off 后，自动连续生成 4 个核心交付文件（`docs/prd-and-design.md` + `docs/PROJECT-RULES.md` + `docs/active-context.md` + `AGENTS.md`），无需用户再次输入命令；生成后必须经步骤 5 审阅闸门确认，方可进入阶段 3。
 4. **安全底线**：严禁自动执行破坏性终端命令或未经同意的 `git push`。

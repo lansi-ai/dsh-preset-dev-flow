@@ -1,5 +1,7 @@
 # 工程架构地图生成指南 (architecture-guide.md)
 
+> **📦 已并入 `project-rules-guide.md`（v2.2）**——新项目按单入口生成，本文仅作历史参考。
+
 ## 01. 技能定位与生成目标
 本指南用于指导 AI 在 `start-project` 阶段 2（或单独执行 `/init-l2-new`）时，读取 `docs/prd-and-design.md` 提取出的业务模块与架构形态，**正向生成一份确定性的工程目录映射与数据流向文件 `architecture.md`（保存于当前 IDE 的规则目录 `{{RULES_DIR}}` 中）**。
 
