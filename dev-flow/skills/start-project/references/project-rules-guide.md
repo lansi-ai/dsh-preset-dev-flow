@@ -54,6 +54,7 @@
 ### 完成门禁（必过）
 - [ ] {{VERIFY_COMMANDS}} 全绿（typecheck/lint/test/build 等，按项目写）
 - [ ] 涉及派生视图（{{DERIVED_DOCS}}）时同步更新
+- [ ] **双源同步**：契约 / 统计口径 / 目录约定 / 异常策略 / 扫描范围变更时，**同时**更新 `docs/prd-and-design.md` 与 `docs/PROJECT-RULES.md`——两文件互为印证，**只改一处即视为漂移**（口径以 prd 为唯一来源，规则入口以 PROJECT-RULES 为唯一来源）
 - [ ] 看板更新：`docs/active-context.md` 一行收口 + 更新「下一步」（仅 MD；C 类豁免）
 - [ ] bug 修复必写坑档（{{PITFALLS_DOC}}，四段式，编号顺延）
 - [ ] 给最终汇报：变更清单 + commit 指令

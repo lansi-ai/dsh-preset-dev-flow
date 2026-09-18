@@ -77,7 +77,7 @@ description: "新项目一站式启动总控技能。调用 brainstorming-guide 
 - **落盘路径**：`docs/active-context.md`（滚动窗口 ≤100 行，**仅 MD，不再生成 HTML**；维护协议注明 C 类任务不强制更新）。
 
 ### 步骤 4：生成跨工具入口 `AGENTS.md`（项目根）
-3 行入口：指向 `docs/PROJECT-RULES.md` + `docs/active-context.md` + 一句话定位（模板见下方）。
+**精简入口（≤15 行）**：必须指向 `docs/PROJECT-RULES.md` + `docs/active-context.md`，并含一句话定位与快速事实（技术栈 / 基线 / 验收命令）——模板见下方，**不要写成长篇规则副本**（规则本体在 PROJECT-RULES，入口只做导航）。
 
 **`AGENTS.md` 模板**：
 
