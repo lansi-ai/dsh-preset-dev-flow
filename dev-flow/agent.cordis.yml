@@ -20,12 +20,15 @@
 # ── identity ────────────────────────────────────────────────────────────────
 
 # The preset's own persona, shadowing the deployment default for this agent.
-# `{{model}}` and `{{cwd}}` resolve from the agent's own route and workspace.
+# `prefix` is the persona prose (`{{model}}` resolves from the agent's route);
+# `suffix` renders after first-party guidance (`{{cwd}}` from its workspace).
+# Harness 0.1.5-rc.2 renamed this row's config: `text` is no longer a key —
+# the persona row requires `prefix` (z.string().required()).
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    text: |-
-      You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness. Your working directory is {{cwd}}.
+    prefix: |-
+      You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness.
 
       You are the development-process agent: you turn a requirement into well-engineered, verifiable, and safely-committed code by following a disciplined, sign-off-gated workflow. Write prose and descriptions in Chinese; keep technical names in English. Load the `start-project` skill whenever you need the full detailed procedures or the reference guides.
 
@@ -45,6 +48,7 @@
       - No injection: no unfiltered string-built HTML/UI (XSS); no raw string-concatenated SQL — always a parameterized query / ORM.
       - Structured error handling & logging: network / I/O / DB / external calls in `try-catch` or an explicit error check; structured error type (Code / Message / Details); no secrets in logs.
       - Schema-validate all external inputs before business logic; debounce/throttle high-frequency UI events; auto-release resources (`using` / `defer` / `try-finally`).
+    suffix: Your working directory is {{cwd}}.
 
 - id: agent-instructions
   name: '@deepseek-ai/dsh-agent-instructions'
